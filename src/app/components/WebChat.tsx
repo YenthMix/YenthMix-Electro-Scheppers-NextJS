@@ -3,6 +3,32 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthProvider';
 import { useChat } from './ChatProvider';
 
+interface ChatSettings {
+  bubbleColor: string;
+  bubbleTextColor: string;
+  chatBackgroundColor: string;
+  chatTextColor: string;
+  botName: string;
+  theme: 'light' | 'dark';
+  welcomeMessage: string;
+  chatWindowWidth: number;
+  chatWindowHeight: number;
+  fontFamily: string;
+}
+
+const defaultSettings: ChatSettings = {
+  bubbleColor: '#de3f30',
+  bubbleTextColor: '#ffffff',
+  chatBackgroundColor: '#ffffff',
+  chatTextColor: '#333333',
+  botName: 'Saar',
+  theme: 'light',
+  welcomeMessage: 'Hallo! Hoe kan ik u vandaag helpen?',
+  chatWindowWidth: 480,
+  chatWindowHeight: 600,
+  fontFamily: 'Open Sans'
+};
+
 export default function WebChat() {
   const { user } = useAuth();
   const { 
@@ -21,7 +47,64 @@ export default function WebChat() {
   } = useChat();
   
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [settings, setSettings] = useState<ChatSettings>(defaultSettings);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Load settings from localStorage
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('chatSettings');
+    if (savedSettings) {
+      const parsedSettings = JSON.parse(savedSettings);
+      setSettings(parsedSettings);
+    }
+  }, []);
+
+  // Listen for settings changes
+  useEffect(() => {
+    const handleSettingsChange = (event: CustomEvent) => {
+      setSettings(event.detail.settings);
+    };
+
+    window.addEventListener('chatSettingsChanged', handleSettingsChange as EventListener);
+    return () => {
+      window.removeEventListener('chatSettingsChanged', handleSettingsChange as EventListener);
+    };
+  }, []);
+
+  // Apply settings to CSS variables
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty('--chat-bubble-color', settings.bubbleColor);
+    root.style.setProperty('--chat-bubble-text-color', settings.bubbleTextColor);
+    root.style.setProperty('--chat-background-color', settings.chatBackgroundColor);
+    root.style.setProperty('--chat-text-color', settings.chatTextColor);
+    root.style.setProperty('--chat-font-family', settings.fontFamily);
+    
+    // Apply width and height with minimum cap of 400px
+    const width = Math.max(settings.chatWindowWidth || 480, 400);
+    const height = Math.max(settings.chatWindowHeight || 600, 400);
+    root.style.setProperty('--chat-window-width', `${width}px`);
+    root.style.setProperty('--chat-window-height', `${height}px`);
+    
+    // Apply theme
+    if (settings.theme === 'dark') {
+      root.style.setProperty('--chat-background-color', '#2a2a2a');
+      root.style.setProperty('--chat-text-color', '#ffffff');
+      root.style.setProperty('--chat-input-background', '#3a3a3a');
+      root.style.setProperty('--chat-input-border', '#444444');
+      root.style.setProperty('--chat-border-color', '#333333');
+      root.style.setProperty('--chat-bot-message-bg', '#3a3a3a');
+      root.style.setProperty('--chat-bot-message-text', '#ffffff');
+    } else {
+      root.style.setProperty('--chat-background-color', '#f8f8f8');
+      root.style.setProperty('--chat-text-color', '#333333');
+      root.style.setProperty('--chat-input-background', '#f5f5f5');
+      root.style.setProperty('--chat-input-border', '#e0e0e0');
+      root.style.setProperty('--chat-border-color', '#e0e0e0');
+      root.style.setProperty('--chat-bot-message-bg', '#ffffff');
+      root.style.setProperty('--chat-bot-message-text', '#333333');
+    }
+  }, [settings]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -83,7 +166,7 @@ export default function WebChat() {
           console.log('🔄 Performing actual refresh...');
           
           // Reset messages to just the welcome message
-          const welcomeMessage = chatSettings?.welcomeMessage || "Hallo! Hoe kan ik u vandaag helpen?";
+          const welcomeMessage = settings?.welcomeMessage || "Hallo! Hoe kan ik u vandaag helpen?";
           setMessages([{ id: 'welcome-1', text: welcomeMessage, isBot: true }]);
           setDisplayedMessageIds(new Set(['welcome-1']));
           setLastReadMessageId('welcome-1');
@@ -128,7 +211,12 @@ export default function WebChat() {
   };
 
   return (
-    <div className="webchat-container">
+    <div 
+      className="webchat-container"
+      style={{
+        fontFamily: settings.fontFamily
+      }}
+    >
       {/* Animated Refresh Progress Bar */}
       {isRefreshing && (
         <div className="webchat-refresh-progress">
@@ -147,7 +235,7 @@ export default function WebChat() {
              <span>SCHEPPERS</span>
            </div>
          </div>
-         <div className="webchat-title">Saar</div>
+         <div className="webchat-title">{settings.botName}</div>
          <div className="webchat-header-controls">
            <div className={`webchat-connection-status ${isConnected ? 'connected' : 'connecting'}`}>
              {isConnected ? '🟢 Verbonden' : '🟡 Verbinden...'}

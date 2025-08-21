@@ -494,8 +494,14 @@ body {
 
   /* WebChat */
   .webchat-container {
-    @apply bg-white rounded-[20px] shadow-webchat border-2 border-elektro-red h-[650px] flex flex-col overflow-hidden mx-auto max-w-[500px] w-full;
+    @apply bg-white rounded-[20px] shadow-webchat flex flex-col overflow-hidden mx-auto;
     position: relative; /* For absolute positioning of progress bar */
+    border: 2px solid var(--chat-bubble-color, #de3f30);
+    font-family: var(--chat-font-family, 'Open Sans');
+    width: var(--chat-window-width, 480px);
+    height: var(--chat-window-height, 600px);
+    max-width: 100%;
+    max-height: 100vh;
   }
 
   /* WebChat Refresh Progress Animation */
@@ -509,9 +515,10 @@ body {
   }
 
   .webchat-progress-fill {
-    @apply absolute bottom-0 left-0 right-0 bg-elektro-red;
+    @apply absolute bottom-0 left-0 right-0;
     height: 0%;
     animation: webchat-progress-wave 2s ease-in-out forwards;
+    background-color: var(--chat-bubble-color, #de3f30);
   }
 
   @keyframes webchat-progress-wave {
@@ -530,7 +537,9 @@ body {
   }
 
   .webchat-header {
-    @apply bg-elektro-red text-white p-5 flex items-center justify-between relative;
+    @apply p-5 flex items-center justify-between relative;
+    background-color: var(--chat-bubble-color, #de3f30);
+    color: var(--chat-bubble-text-color, #ffffff);
   }
 
   .webchat-logo {
@@ -558,7 +567,8 @@ body {
   }
 
   .webchat-refresh-button {
-    @apply bg-transparent border-none text-white cursor-pointer p-1 rounded-full transition-all duration-200 flex items-center justify-center text-base w-8 h-8;
+    @apply bg-transparent border-none cursor-pointer p-1 rounded-full transition-all duration-200 flex items-center justify-center text-base w-8 h-8;
+    color: var(--chat-bubble-text-color, #ffffff);
   }
 
   .webchat-refresh-button:hover:not(:disabled) {
@@ -596,7 +606,9 @@ body {
 
   /* WebChat Messages */
   .webchat-messages {
-    @apply flex-1 p-5 overflow-y-auto bg-gray-50 flex flex-col gap-4;
+    @apply flex-1 p-5 overflow-y-auto flex flex-col gap-4;
+    background-color: var(--chat-background-color, #f8f8f8);
+    color: var(--chat-text-color, #333333);
   }
 
   .webchat-message {
@@ -616,24 +628,34 @@ body {
   }
 
   .webchat-message.bot-message .webchat-message-content {
-    @apply bg-white text-black border border-gray-200 rounded-bl-sm shadow-sm;
+    @apply border border-gray-200 rounded-bl-sm shadow-sm;
+    background-color: var(--chat-bot-message-bg, #ffffff);
+    color: var(--chat-bot-message-text, #333333);
   }
 
   .webchat-message.user-message .webchat-message-content {
-    @apply bg-elektro-red text-white rounded-br-sm font-medium;
+    @apply rounded-br-sm font-medium;
+    background-color: var(--chat-bubble-color, #de3f30);
+    color: var(--chat-bubble-text-color, #ffffff);
   }
 
   /* WebChat Input */
   .webchat-input {
-    @apply p-5 bg-white border-t border-gray-200 flex gap-2 items-center;
+    @apply p-5 flex gap-2 items-center;
+    background-color: var(--chat-background-color, #ffffff);
+    border-top: 1px solid var(--chat-border-color, #e0e0e0);
   }
 
   .webchat-message-input {
-    @apply flex-1 px-4 py-3 border-2 border-gray-200 rounded-full text-sm outline-none transition-all duration-300 font-open-sans;
+    @apply flex-1 px-4 py-3 border-2 rounded-full text-sm outline-none transition-all duration-300 font-open-sans;
+    background-color: var(--chat-input-background, #f5f5f5);
+    color: var(--chat-text-color, #333333);
+    border-color: var(--chat-input-border, #e0e0e0);
   }
 
   .webchat-message-input:focus {
-    @apply border-elektro-red shadow-[0_0_0_3px_rgba(222,63,48,0.1)];
+    @apply shadow-[0_0_0_3px_rgba(222,63,48,0.1)];
+    border-color: var(--chat-bubble-color, #de3f30);
   }
 
   .webchat-message-input:disabled {
@@ -641,11 +663,14 @@ body {
   }
 
   .webchat-send-button {
-    @apply bg-elektro-red text-white border-none px-5 py-3 rounded-full text-sm font-semibold cursor-pointer transition-all duration-300 min-w-20 font-montserrat;
+    @apply border-none px-5 py-3 rounded-full text-sm font-semibold cursor-pointer transition-all duration-300 min-w-20 font-montserrat;
+    background-color: var(--chat-bubble-color, #de3f30);
+    color: var(--chat-bubble-text-color, #ffffff);
   }
 
   .webchat-send-button:hover:not(:disabled) {
-    @apply bg-elektro-red-dark -translate-y-0.5 shadow-button-hover;
+    @apply -translate-y-0.5 shadow-button-hover;
+    background-color: var(--chat-bubble-color-dark, #c03528);
   }
 
   .webchat-send-button:disabled {
@@ -693,6 +718,7 @@ body {
   /* Chat Beheren Page */
 .chat-beheren-content {
     @apply grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto;
+    margin-left: -140px;
 }
 
 .settings-panel {
@@ -781,6 +807,7 @@ body {
 
 .chat-preview {
     @apply bg-white rounded-[15px] p-8 shadow-card border-2 border-elektro-red h-fit;
+    width: calc(100% + 200px);
 }
 
 .chat-preview h3 {

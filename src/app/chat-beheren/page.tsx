@@ -250,8 +250,8 @@ export default function ChatBeherenPage() {
                 type="number"
                 value={settings.chatWindowWidth}
                 onChange={(e) => handleSettingChange('chatWindowWidth', parseInt(e.target.value))}
-                min="300"
-                max="800"
+                min="400"
+                max="750"
                 step="10"
               />
             </div>
@@ -296,10 +296,13 @@ export default function ChatBeherenPage() {
         <div className="chat-preview">
           <h3>Voorvertoning</h3>
           <div className="preview-chat-window" style={{
-            width: `${settings.chatWindowWidth}px`,
-            height: `${settings.chatWindowHeight}px`,
+            width: `${Math.max(settings.chatWindowWidth, 400)}px`,
+            height: `${Math.max(settings.chatWindowHeight, 400)}px`,
             backgroundColor: settings.theme === 'dark' ? '#1a1a1a' : '#ffffff',
-            color: settings.theme === 'dark' ? '#ffffff' : '#333333'
+            color: settings.theme === 'dark' ? '#ffffff' : '#333333',
+            border: `2px solid ${settings.bubbleColor}`,
+            borderRadius: '20px',
+            overflow: 'hidden'
           }}>
             <div className="preview-chat-header" style={{
               backgroundColor: settings.bubbleColor,
