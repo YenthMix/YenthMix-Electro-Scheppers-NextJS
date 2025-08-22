@@ -114,27 +114,162 @@ export default function WebChat() {
     scrollToBottom();
   }, [messages]);
 
-  // Function to convert URLs in text to clickable links
+  // Function to convert URLs in text to clickable links and add line breaks after periods/colons
   const formatMessageWithLinks = (text: string) => {
-    const urlRegex = /(https?:\/\/[^\s\)\]\}]+)/g;
-    const parts = text.split(urlRegex);
+    // Extract URLs and their descriptive text before cleaning
+    const urlRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    const links: Array<{text: string, url: string}> = [];
+    let match;
     
-    return parts.map((part, index) => {
-      if (part.match(urlRegex)) {
-        return (
+    // Store all links with their text and URLs
+    while ((match = urlRegex.exec(text)) !== null) {
+      links.push({
+        text: match[1], // The descriptive text like "Bekijk onze Facebook"
+        url: match[2]   // The actual URL
+      });
+    }
+    
+    // Clean up unnecessary formatting characters
+    let cleanedText = text
+      .replace(/\*\*/g, '')  // Remove ** (bold formatting)
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')  // Remove [text](url) but keep the text
+      .replace(/\[[^\]]*\]/g, '');  // Remove remaining square brackets and their content
+      // Note: We keep parentheses for phone numbers like (088) 180 80 80
+
+    // First, add single line breaks after periods and colons
+    let formattedText = cleanedText
+      .replace(/\. /g, '.\n')  // Add single line break after periods
+      .replace(/\.$/g, '.\n')  // Add line break if period is at end
+      .replace(/:$/g, ':\n')   // Add line break if colon is at end
+      .replace(/(social media:)/g, '$1\n')  // Add line break after social media section
+
+    // Split by newlines and process each line
+    const lines = formattedText.split('\n');
+    
+    return lines.map((line, lineIndex) => {
+      // Check if this line contains any of our link texts
+      let processedLine = line;
+      let linkElements: React.ReactElement[] = [];
+      
+      // Make contact labels bold (Telefoon, E-mail, Facebook, LinkedIn, YouTube, etc.)
+      const labelRegex = /(Telefoon|E-mail|Facebook|LinkedIn|YouTube|Twitter|Instagram|WhatsApp|Website):/g;
+      processedLine = processedLine.replace(labelRegex, (match, label) => {
+        const boldElement = (
+          <strong key={`label-${lineIndex}-${linkElements.length}`}>
+            {label}
+          </strong>
+        );
+        linkElements.push(boldElement);
+        return `__LINK_${linkElements.length - 1}__:`;
+      });
+      
+      // Process phone numbers
+      const phoneRegex = /\((\d{3})\)\s*(\d{3}\s*\d{2}\s*\d{2})/g;
+      processedLine = processedLine.replace(phoneRegex, (match, areaCode, number) => {
+        const cleanNumber = number.replace(/\s/g, '');
+        const phoneUrl = `tel:${areaCode}${cleanNumber}`;
+        const linkElement = (
           <a
-            key={index}
-            href={part}
+            key={`phone-${lineIndex}-${linkElements.length}`}
+            href={phoneUrl}
+            className="message-link"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {match}
+          </a>
+        );
+        linkElements.push(linkElement);
+        return `__LINK_${linkElements.length - 1}__`;
+      });
+      
+      // Process email addresses
+      const emailRegex = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+      processedLine = processedLine.replace(emailRegex, (match) => {
+        const emailUrl = `mailto:${match}`;
+        const linkElement = (
+          <a
+            key={`email-${lineIndex}-${linkElements.length}`}
+            href={emailUrl}
+            className="message-link"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {match}
+          </a>
+        );
+        linkElements.push(linkElement);
+        return `__LINK_${linkElements.length - 1}__`;
+      });
+      
+      // Process social media links
+      links.forEach((link, linkIndex) => {
+        if (line.includes(link.text)) {
+          // Determine the display text based on the URL
+          let displayText = link.text;
+          if (link.url.includes('facebook.com')) {
+            displayText = 'Facebook';
+          } else if (link.url.includes('linkedin.com')) {
+            displayText = 'LinkedIn';
+          } else if (link.url.includes('twitter.com') || link.url.includes('x.com')) {
+            displayText = 'Twitter';
+          } else if (link.url.includes('instagram.com')) {
+            displayText = 'Instagram';
+          }
+          
+          const linkElement = (
+            <a
+              key={`social-${lineIndex}-${linkIndex}`}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="message-link"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {displayText}
+            </a>
+          );
+          
+          // Replace the text with a placeholder and store the link element
+          processedLine = processedLine.replace(link.text, `__LINK_${linkElements.length}__`);
+          linkElements.push(linkElement);
+        }
+      });
+      
+      // Process regular URLs
+      const urlRegex = /(https?:\/\/[^\s\)\]\}]+)/g;
+      processedLine = processedLine.replace(urlRegex, (match) => {
+        const linkElement = (
+          <a
+            key={`url-${lineIndex}-${linkElements.length}`}
+            href={match}
             target="_blank"
             rel="noopener noreferrer"
             className="message-link"
             onClick={(e) => e.stopPropagation()}
           >
-            {part}
+            {match}
           </a>
         );
-      }
-      return part;
+        linkElements.push(linkElement);
+        return `__LINK_${linkElements.length - 1}__`;
+      });
+      
+      // Split the line by our placeholder and interleave with link elements
+      const parts = processedLine.split(/(__LINK_\d+__)/);
+      const finalParts = parts.map((part, partIndex) => {
+        const linkMatch = part.match(/__LINK_(\d+)__/);
+        if (linkMatch) {
+          const linkIndex = parseInt(linkMatch[1]);
+          return linkElements[linkIndex];
+        }
+        return part;
+      });
+      
+      return (
+        <span key={lineIndex}>
+          {finalParts}
+          {lineIndex < lines.length - 1 && <br />}
+        </span>
+      );
     });
   };
 

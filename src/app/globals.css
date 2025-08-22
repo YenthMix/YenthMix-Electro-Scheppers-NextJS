@@ -43,7 +43,8 @@ body {
 
 /* Chat Window */
 .chat-window {
-    @apply fixed bottom-32 right-8 w-[480px] h-[600px] bg-white rounded-[20px] shadow-chat-window flex flex-col overflow-hidden opacity-0 invisible translate-y-5 scale-95 transition-all duration-300 ease-chat z-[999] border-2 border-elektro-red;
+    @apply fixed bottom-32 right-8 w-[480px] h-[600px] bg-white rounded-[20px] shadow-chat-window flex flex-col overflow-hidden opacity-0 invisible translate-y-5 scale-95 transition-all duration-300 ease-chat z-[999];
+    border: 2px solid var(--chat-bubble-color, #de3f30);
 }
 
 .chat-window.open {
@@ -52,7 +53,8 @@ body {
 
 /* Chat Header */
 .chat-header {
-    @apply bg-elektro-red text-white p-5 flex items-center justify-between relative;
+    @apply text-white p-5 flex items-center justify-between relative;
+    background-color: var(--chat-bubble-color, #de3f30);
 }
 
 .chat-header-content {
@@ -129,7 +131,9 @@ body {
 }
 
 .user-message .message-content {
-    @apply bg-elektro-red text-white rounded-br-sm font-medium;
+    @apply rounded-br-sm font-medium;
+    background-color: var(--chat-bubble-color, #de3f30);
+    color: var(--chat-bubble-text-color, #ffffff);
 }
 
   /* Message Images */
@@ -609,6 +613,22 @@ body {
     @apply flex-1 p-5 overflow-y-auto flex flex-col gap-4;
     background-color: var(--chat-background-color, #f8f8f8);
     color: var(--chat-text-color, #333333);
+  }
+
+  /* Sentence spacing in WebChat messages */
+  .webchat-message-content {
+    line-height: 1.4;
+    word-wrap: break-word;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Add extra spacing between sentences */
+  .webchat-message-content p {
+    margin-bottom: 0.5em;
+  }
+
+  .webchat-message-content p:last-child {
+    margin-bottom: 0;
   }
 
   .webchat-message {
