@@ -43,10 +43,30 @@ export const useAuth = () => {
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    // Don't restore user session on page refresh - always require fresh login
-    // This ensures users are logged out when they close and reopen the website
+    // Restore user session from localStorage on page load
+    const savedUser = localStorage.getItem('auth_user');
+    if (savedUser) {
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        // Verify the user still exists in our database
+        const foundUser = USERS.find(
+          u => u.username === parsedUser.username && u.email === parsedUser.email && u.role === parsedUser.role
+        );
+        if (foundUser) {
+          setUser(parsedUser);
+        } else {
+          // User no longer exists, clear localStorage
+          localStorage.removeItem('auth_user');
+        }
+      } catch (error) {
+        console.error('Error parsing saved user:', error);
+        localStorage.removeItem('auth_user');
+      }
+    }
+    setIsInitialized(true);
   }, []);
 
   const login = (usernameOrEmail: string, password: string): boolean => {
@@ -62,7 +82,15 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         role: foundUser.role
       };
       setUser(userWithoutPassword);
-      // Don't save to localStorage - session only lasts for current browser session
+      
+      // Save to localStorage (without password for security)
+      const userToSave = {
+        username: foundUser.username,
+        email: foundUser.email,
+        role: foundUser.role
+      };
+      localStorage.setItem('auth_user', JSON.stringify(userToSave));
+      
       return true;
     }
     
@@ -71,7 +99,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
   const logout = () => {
     setUser(null);
-    // No need to remove from localStorage since we don't save there
+    localStorage.removeItem('auth_user');
   };
 
   const value: AuthContextType = {
@@ -80,6 +108,11 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     logout,
     isAuthenticated: !!user
   };
+
+  // Don't render children until we've checked localStorage
+  if (!isInitialized) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <AuthContext.Provider value={value}>

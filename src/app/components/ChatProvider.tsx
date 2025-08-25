@@ -54,10 +54,11 @@ export default function ChatProvider({ children }: { children: React.ReactNode }
   const [displayedMessageIds, setDisplayedMessageIds] = useState(new Set(['welcome-1']));
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [userKey, setUserKey] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -763,14 +764,22 @@ export default function ChatProvider({ children }: { children: React.ReactNode }
     try {
       console.log('🔄 Starting chat refresh...');
       
-      // Disable input and show loading state
-      setIsLoading(true);
+      // Start refresh animation
+      setIsRefreshing(true);
+      
+      // Clear all states immediately to prevent "Bot is responding..." message
+      setIsLoading(false);
       setIsConnected(false);
       setInputValue('');
       
-      // Reset messages to just the welcome message
+      // Reset messages to just the welcome message (no typing states)
       const welcomeMessage = chatSettings?.welcomeMessage || "Hallo! Hoe kan ik u vandaag helpen?";
-      setMessages([{ id: 'welcome-1', text: welcomeMessage, isBot: true }]);
+      setMessages([{ 
+        id: 'welcome-1', 
+        text: welcomeMessage, 
+        isBot: true,
+        isTyping: false // Ensure no typing state
+      }]);
       setDisplayedMessageIds(new Set(['welcome-1']));
       setLastReadMessageId('welcome-1');
       setUnreadCount(0);
@@ -811,6 +820,7 @@ export default function ChatProvider({ children }: { children: React.ReactNode }
                 setTimeout(() => {
                   setIsConnected(true);
                   setIsLoading(false);
+                  setIsRefreshing(false);
                   console.log('✅ Chat refresh completed - user can now type');
                 }, 2000);
                 
@@ -827,6 +837,7 @@ export default function ChatProvider({ children }: { children: React.ReactNode }
         setTimeout(() => {
           setIsConnected(false);
           setIsLoading(false);
+          setIsRefreshing(false);
           console.log('⚠️ Chat refresh completed with connection issues');
         }, 2000);
         
@@ -837,6 +848,7 @@ export default function ChatProvider({ children }: { children: React.ReactNode }
         setTimeout(() => {
           setIsConnected(false);
           setIsLoading(false);
+          setIsRefreshing(false);
           console.log('⚠️ Chat refresh completed with connection issues');
         }, 2000);
       }
@@ -845,7 +857,8 @@ export default function ChatProvider({ children }: { children: React.ReactNode }
       const infoMessage = {
         id: `info-${Date.now()}`,
         text: "Chat is refreshed. You can start a new conversation.",
-        isBot: true
+        isBot: true,
+        isTyping: false // Ensure no typing state
       };
       setMessages(prev => [...prev, infoMessage]);
       
@@ -856,7 +869,7 @@ export default function ChatProvider({ children }: { children: React.ReactNode }
       setTimeout(() => {
         setIsConnected(false);
         setIsLoading(false);
-        console.log('❌ Chat refresh failed');
+        setIsRefreshing(false);
       }, 2000);
     }
   };
@@ -983,7 +996,7 @@ export default function ChatProvider({ children }: { children: React.ReactNode }
                 onClick={handleRefresh}
                 className="chat-refresh-button"
                 title="Vernieuwen"
-                disabled={isLoading}
+                disabled={isLoading || isRefreshing}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/>
@@ -997,6 +1010,13 @@ export default function ChatProvider({ children }: { children: React.ReactNode }
             </svg>
           </button>
         </div>
+
+        {/* Animated Refresh Progress Bar */}
+        {isRefreshing && (
+          <div className="chat-refresh-progress">
+            <div className="chat-progress-fill"></div>
+          </div>
+        )}
         
         <div 
           className="chat-messages"

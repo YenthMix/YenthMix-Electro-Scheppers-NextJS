@@ -20,9 +20,12 @@ export default function Sidebar({ activeSection }: SidebarProps) {
     router.push('/chat-beheren');
   };
 
+  const handleLogging = () => {
+    router.push('/logging');
+  };
+
   const handleGebruikers = () => {
-    // TODO: Implement users management page
-    console.log('Gebruikers management clicked');
+    router.push('/gebruikers');
   };
 
   return (
@@ -66,16 +69,33 @@ export default function Sidebar({ activeSection }: SidebarProps) {
         </button>
 
         <button 
+          className={`sidebar-item ${activeSection === 'logging' ? 'active' : ''}`}
+          onClick={handleLogging}
+        >
+          <div className="sidebar-icon">📊</div>
+          <div className="sidebar-content">
+            <span className="sidebar-title">WebChat Logging</span>
+            <span className="sidebar-description">Bekijk chat logs en statistieken</span>
+          </div>
+        </button>
+
+        <button 
           className={`sidebar-item ${activeSection === 'gebruikers' ? 'active' : ''}`}
           onClick={handleGebruikers}
         >
           <div className="sidebar-icon">👥</div>
           <div className="sidebar-content">
             <span className="sidebar-title">Gebruikers</span>
-            <span className="sidebar-description">Beheer gebruikersaccounts</span>
+            <span className="sidebar-description">Beheer gebruikers</span>
           </div>
         </button>
       </nav>
+
+      <div className="sidebar-footer">
+        <div className="user-info">
+          <div className="user-avatar">Y</div>
+        </div>
+      </div>
     </div>
   );
 }
